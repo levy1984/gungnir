@@ -16,8 +16,7 @@ import java.util.Properties;
 
 public class FlinkWordCountDemo {
 
-
-    public static void main(String[] args) {
+    public void wordCount(){
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         // checkpoint every 5000 msecs
 //        env.enableCheckpointing(5000);
@@ -30,13 +29,14 @@ public class FlinkWordCountDemo {
 
 
         FlinkKafkaConsumer010<String> myConsumer = new FlinkKafkaConsumer010<String>("test", new SimpleStringSchema(), properties);
-//        myConsumer.setStartFromEarliest();     // start from the earliest record possible
-//        myConsumer.setStartFromLatest();       // start from the latest record
-//        myConsumer.setStartFromGroupOffsets(); // the default behaviour
+        myConsumer.setStartFromEarliest();     // start from the earliest record possible
+        myConsumer.setStartFromLatest();       // start from the latest record
+        myConsumer.setStartFromGroupOffsets(); // the default behaviour
 
 
 
-        DataStream<Tuple2<String, Integer>> dataStream =env.addSource(myConsumer).rebalance().flatMap(new LineSplitter());
+        DataStream<Tuple2<String, Integer>> dataStream =env.addSource(myConsumer)
+                .flatMap(new LineSplitter()).keyBy(0).sum(1);
         dataStream.print();
 
         try {
@@ -44,6 +44,12 @@ public class FlinkWordCountDemo {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+
+    public static void main(String[] args) {
+        FlinkWordCountDemo test = new FlinkWordCountDemo();
+        test.wordCount();
     }
     public static final class LineSplitter implements FlatMapFunction<String, Tuple2<String, Integer>> {
 
